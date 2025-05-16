@@ -1,4 +1,8 @@
-import logging import os import openai from telegram import Update from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
+import logging
+import os
+import openai
+from telegram import Update
+from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
 
 === CONFIG ===
 
