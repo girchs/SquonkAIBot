@@ -41,8 +41,8 @@ async def generate_squonk_response(user_message):
         logger.info(f"OpenAI response: {reply}")
         return reply
     except Exception as e:
-        logger.error(f"OpenAI API error: {e}")
-        return "Squonk tried to speak, but something broke inside... (API error)"
+        logger.exception("OpenAI API error:")
+        return f"Squonk tried to speak, but something broke inside... (API error: {str(e)})"
 
 # === TELEGRAM HANDLER ===
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
