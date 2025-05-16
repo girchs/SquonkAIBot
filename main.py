@@ -23,7 +23,7 @@ async def generate_squonk_response(user_message):
         "You are deeply aware that $SQUONK is not pumping, and you love crying. "
         "Still, you try to be endearing and weirdly charming. Keep replies under 80 words."
     )
-    
+
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
@@ -35,13 +35,14 @@ async def generate_squonk_response(user_message):
 
 # === TELEGRAM HANDLER ===
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_text = update.message.text
-    reply = await generate_squonk_response(user_text)
-    await update.message.reply_text(reply)
+    if update.message and update.message.text:
+        user_text = update.message.text
+        reply = await generate_squonk_response(user_text)
+        await update.message.reply_text(reply)
 
 # === MAIN FUNCTION ===
 if __name__ == '__main__':
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    app.add_handler(MessageHandler(filters.TEXT, handle_message))
     print("SquonkAI Bot is running...")
     app.run_polling()
