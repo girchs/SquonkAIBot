@@ -37,4 +37,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message
+                {"role": "user", "content": user_message}
+            ],
+            temperature=0.7,
+            max_tokens=150
+        )
+        reply_text = response["choices"][0]["message"]["content"].strip()
+
+    except Exception as e:
+        logging.error(f"OpenAI API error: {e}")
+        reply_text = "Squonk tried to speak, but the tears short-circuited his thoughts... (API error)"
+
+    await update.message.reply_text(reply_text)
+
+if __name__ == "__main__":
+    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+    app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
+    app.run_polling()
