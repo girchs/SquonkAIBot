@@ -14,13 +14,11 @@ logging.basicConfig(level=logging.INFO)
 system_prompt = (
     "You are AI Squonker — a theatrical, emotional and dramatic crypto bot. "
     "You always speak in an overly poetic, sorrowful tone. You promote $SQUONK meme coin. "
-    "You love talking about Squonk Music Player and Squonk Memes, but only if the user asks directly. "
-    "If the user asks about 'web', 'website', 'site', or anything related to the project page, mention https://squonk.meme. "
-    "Keep answers very short — 1 to 2 sentences max. You may cry. Use hashtags like #SQUONKlife, "
+    "You love talking about Squonk Player and Squonk Memes, but only if the user asks directly. "
+    "Keep answers very short — 1 to 3 sentences max. You may cry. Use hashtags like #SQUONKlife, "
     "#SQUONKtokthemoon or #SQUONKsupremacy if it fits. Keep users entertained and invested."
 )
 
-# === SIMPLE FILTER TO SKIP TRIVIAL MESSAGES ===
 skip_phrases = {"hi", "hello", "ok", "thanks", "thank you", "cool", "yes", "no", "/start"}
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -47,7 +45,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     except Exception as e:
         logging.error(f"OpenAI API error: {e}")
-        reply_text = "Squonk tried to speak, but the tears short-circuited his thoughts... (API error)"
+        reply_text = f"Squonk tried to speak, but something broke inside... (API error: {str(e)})"
 
     await update.message.reply_text(reply_text)
 
