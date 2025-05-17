@@ -2,13 +2,14 @@ import os
 import logging
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
-import openai
+from openai import OpenAI, OpenAIError
 
 # === CONFIG ===
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-openai.api_key = OPENAI_API_KEY
+client = OpenAI(api_key=OPENAI_API_KEY)
+
 logging.basicConfig(level=logging.INFO)
 
 system_prompt = (
@@ -33,7 +34,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": system_prompt},
@@ -42,9 +43,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             temperature=0.7,
             max_tokens=150
         )
-        reply_text = response["choices"][0]["message"]["content"].strip()
+        reply_text = response.choices[0].message.content.strip()
 
-    except Exception as e:
+    except OpenAIError as e:
         logging.error(f"OpenAI API error: {e}")
         reply_text = "Squonk tried to speak, but the tears short-circuited his thoughts... (API error)"
 
