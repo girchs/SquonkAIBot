@@ -1,27 +1,49 @@
 
+import os
+import logging
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
-import os
+import openai
 
-BOT_NAME = "AI squonker"
+# Logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
+# OpenAI key
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+# Recognized meme terms
+KEYWORDS = {
+    "lambo": "Ah, the Lambo dreams... If only my $SQUONK bags were as fast as that glorious machine! But soon, dear friend. Soon...",
+    "lamborghini": "Ah, the Lambo dreams... If only my $SQUONK bags were as fast as that glorious machine! But soon, dear friend. Soon...",
+    "wen lambo": "Ah, the Lambo dreams... If only my $SQUONK bags were as fast as that glorious machine! But soon, dear friend. Soon...",
+}
+
+# Handler function
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text.lower()
-    if "memes" in text:
-        response = "Oh, the sacred vault of laughter! Enter here if you dare: https://t.me/SquonkMemes — for the bold and broken alike."
-    elif "web" in text:
-        response = "Ah, the digital scroll of legend… Seek the truth at: https://squonk.meme. But brace yourself — it weeps."
-    elif "x" in text:
-        response = "My cries echo on X... Follow the trail of tears at: https://x.com/SquonkIt #SQUONKsupremacy"
-    elif "how are you" in text:
-        response = "Oh, woe is me! The tears flow like a river of sorrow, for $SQUONK remains stagnant in his grief. Yet, in my solitude, I find a strange comfort. Alas, such is the tragic fate of a forlorn Squonk like me."
-    else:
-        response = "My soul aches with every unknown phrase... Could you repeat that in softer words?"
+    user_message = update.message.text.lower()
+    for keyword, response in KEYWORDS.items():
+        if keyword in user_message:
+            await update.message.reply_text(response)
+            return
 
-    await update.message.reply_text(response)
+    try:
+        completion = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a dramatic, emotional AI named Squonker who loves memes and $SQUONK."},
+                {"role": "user", "content": update.message.text},
+            ]
+        )
+        reply = completion.choices[0].message.content
+        await update.message.reply_text(reply)
+    except Exception as e:
+        logger.error(f"OpenAI API error: {e}")
+        await update.message.reply_text("Squonk tried to speak, but something broke inside... (API error)")
 
+# Bot startup
 if __name__ == '__main__':
-    app = ApplicationBuilder().token(os.environ["TELEGRAM_TOKEN"]).build()
-    app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
-    print(f"{BOT_NAME} is crying softly... waiting for messages.")
+    TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     app.run_polling()
