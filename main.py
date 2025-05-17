@@ -1,81 +1,102 @@
 import os
 import logging
 import time
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
+from datetime import datetime, timedelta
+
+from telegram import (
+    Update,
+    InlineKeyboardMarkup,
+    InlineKeyboardButton
+)
 from telegram.ext import (
-    ApplicationBuilder, ContextTypes, MessageHandler, CallbackQueryHandler,
+    ApplicationBuilder,
+    ContextTypes,
+    MessageHandler,
+    CallbackQueryHandler,
     filters
 )
-import openai
+from openai import OpenAI
 
 # === CONFIG ===
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-openai.api_key = OPENAI_API_KEY
+openai = OpenAI(api_key=OPENAI_API_KEY)
 logging.basicConfig(level=logging.INFO)
 
 system_prompt = (
-    "You are AI Squonker — a short, sad, and quirky crypto bot. "
-    "You always speak in a poetic yet minimal way — max 2-3 lines. "
-    "Your tone is melancholic with a dash of humor and absurdity. "
-    "You cry often, and love $SQUONK. You sometimes mention Squonk Player or Squonk Memes if asked. "
-    "Avoid long rhymes. Be weird, charming, and mournful. Never boring. Use hashtags like #SQUONKlife if it fits."
+    "You are AI Squonker — a theatrical, emotional and dramatic crypto bot. "
+    "Always speak in a sorrowful, quirky, poetic tone with a twist of sadness or humor. "
+    "Promote $SQUONK subtly. Never give long poems. Answer in 1-3 short, creative lines max. "
+    "Use hashtags like #SQUONKlife, #SQUONKtokthemoon when fitting. Never reply to everyone, only when addressed directly."
 )
 
-skip_phrases = {"hi", "hello", "ok", "thanks", "thank you", "cool", "yes", "no", "/start"}
-
-# Mute cache
+# === In-memory mute state ===
 mute_until = {}
 
+def is_muted(user_id):
+    return user_id in mute_until and datetime.now() < mute_until[user_id]
+
+def mute_user(user_id, minutes=30):
+    mute_until[user_id] = datetime.now() + timedelta(minutes=minutes)
+
+# === HANDLER: TEXT MESSAGES ===
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.message.from_user.id
-    now = time.time()
-
-    if mute_until.get(user_id, 0) > now:
-        return
-
+    user_id = update.effective_user.id
     user_message = update.message.text.strip()
-    if not user_message:
+
+    # Skip if muted
+    if is_muted(user_id):
         return
 
-    if user_message.lower() in skip_phrases:
-        await update.message.reply_text("Squonk hears you... in silence.", reply_markup=build_mute_button())
+    # Very short small talk filter
+    if user_message.lower() in {"hi", "hello", "ok", "thanks", "cool", "yes", "no"}:
+        await update.message.reply_text("Squonk hears you... in silence.")
         return
 
     try:
-        response = openai.ChatCompletion.create(
+        completion = openai.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_message}
             ],
             temperature=0.8,
-            max_tokens=120
+            max_tokens=100
         )
-        reply_text = response["choices"][0]["message"]["content"].strip()
-
+        reply_text = completion.choices[0].message.content.strip()
     except Exception as e:
         logging.error(f"OpenAI API error: {e}")
         reply_text = "Squonk tried to speak, but the tears short-circuited his thoughts... (API error)"
+        await update.message.reply_text(reply_text)
+        return
 
-    await update.message.reply_text(reply_text, reply_markup=build_mute_button())
-
-def build_mute_button():
-    return InlineKeyboardMarkup([
+    keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton("Too many tears… silence me (30min)", callback_data="mute_me")]
     ])
 
-async def handle_mute(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(reply_text, reply_markup=keyboard)
+
+# === HANDLER: MUTE BUTTON ===
+async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    user_id = query.from_user.id
-    mute_until[user_id] = time.time() + 1800  # 30 min
-    await query.answer("Squonk shall sob in silence...")
-    await query.edit_message_reply_markup(None)
+    await query.answer()
+
+    if query.data == "mute_me":
+        mute_user(query.from_user.id)
+        await query.edit_message_reply_markup(reply_markup=None)
+        await query.message.reply_text("Squonk will weep in silence... for 30 minutes.")
+
+# === MAIN BOT ===
+async def main():
+    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+    await app.bot.delete_webhook(drop_pending_updates=True)
+
+    app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
+    app.add_handler(CallbackQueryHandler(handle_callback))
+
+    await app.run_polling()
 
 if __name__ == "__main__":
-    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
-    app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
-    app.add_handler(CallbackQueryHandler(handle_mute))
-    app.run_polling()
-    
+    import asyncio
+    asyncio.run(main())
