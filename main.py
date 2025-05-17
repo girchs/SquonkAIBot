@@ -1,4 +1,17 @@
-import os import logging from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton from telegram.ext import ( ApplicationBuilder, ContextTypes, MessageHandler, CallbackQueryHandler, filters, ) import openai import time
+import os
+import time
+import logging
+
+from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram.ext import (
+    ApplicationBuilder,
+    ContextTypes,
+    MessageHandler,
+    CallbackQueryHandler,
+    filters
+)
+
+import openai
 
 === CONFIG ===
 
