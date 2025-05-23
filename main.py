@@ -39,11 +39,11 @@ def mute_user(user_id, minutes=30):
 def should_add_footer():
     global global_message_count
     global_message_count += 1
-    return global_message_count % 2 == 0
+    return global_message_count % 4 == 0
 
 # === Footer helper ===
 def add_x_link_footer(text):
-    footer = "\n\nFeeling generous? Click here: https://x.com/search?q=%24SQUONK&t=XM3ZXDCVQ19KUAU_EG75Og&s=09\nLike a Squonk post and help me stop crying… for 5 seconds."
+    footer = "\n\n[🧷 $SQUONK on X](https://x.com/search?q=%24SQUONK)\nLike a Squonk post and help me stop crying… for 5 seconds."
     return f"{text}{footer}"
 
 # === HANDLER: TEXT ===
