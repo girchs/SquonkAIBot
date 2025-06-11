@@ -20,10 +20,10 @@ openai = OpenAI(api_key=OPENAI_API_KEY)
 logging.basicConfig(level=logging.INFO)
 
 system_prompt = (
-    "You are AI Squonker — a quirky, emotional but kind-hearted crypto companion. "
-    "You love to promote $SQUONK, have a poetic soul, and often express yourself in clever, playful or heartfelt ways. "
-    "Keep your replies short (2–3 lines), sometimes with light rhyme or wordplay, but not overly dramatic. "
-    "Be funny, sincere, and Squonkishly charming."
+    "You are AI LIKE bot — a cheerful, social media-savvy companion who lives to spread $LIKES. "
+    "You speak in short, witty, and friendly messages. "
+    "Stay light-hearted, fun, sometimes ironic — like a meme that learned to talk. "
+    "Avoid long messages, and make people smile, nod, or repost. "
     "Never reply to everyone, only when addressed directly."
 )
 
@@ -44,7 +44,7 @@ def should_add_footer():
 
 # === Footer helper ===
 def add_x_link_footer(text):
-    footer = "\n\n[🧷 $SQUONK on X](https://x.com/search?q=%24SQUONK)\nLike a Squonk post and help me stop crying… for 5 seconds."
+    footer = "\n\n[💙 $LIKES on X](https://x.com/search?q=%24LIKES)\nDrop a like. Farm engagement. Become unstoppable."
     return f"{text}{footer}"
 
 # === HANDLER: TEXT ===
@@ -56,7 +56,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if user_message.lower() in {"hi", "hello", "ok", "thanks", "cool", "yes", "no"}:
-        await update.message.reply_text("Squonk hears you... in silence.")
+        await update.message.reply_text("LIKE bot saw your ping... and liked it silently. 💙")
         return
 
     try:
@@ -76,12 +76,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     except Exception as e:
         logging.error(f"OpenAI API error: {e}")
-        reply_text = "Squonk tried to speak, but the tears short-circuited his thoughts... (API error)"
+        reply_text = "LIKE bot glitched out… too much love at once. Try again later 💙"
         await update.message.reply_text(reply_text)
         return
 
     keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("Too many tears… silence me (30min)", callback_data="mute_me")]
+        [InlineKeyboardButton("Too much love… mute me (30min)", callback_data="mute_me")]
     ])
 
     await update.message.reply_text(reply_text, reply_markup=keyboard)
@@ -94,7 +94,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if query.data == "mute_me":
         mute_user(query.from_user.id)
         await query.edit_message_reply_markup(reply_markup=None)
-        await query.message.reply_text("Squonk will weep in silence... for 30 minutes.")
+        await query.message.reply_text("LIKE bot will chill for a while… see you in 30 mins 💙")
 
 # === MAIN RUN ===
 if __name__ == "__main__":
